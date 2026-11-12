@@ -1,8 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import secrets
-
 from flask import Blueprint, request, jsonify, current_app
-
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
@@ -11,9 +9,7 @@ from flask_jwt_extended import (
 )
 
 from werkzeug.security import generate_password_hash, check_password_hash
-
 from extensions import db
-from models import User
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
