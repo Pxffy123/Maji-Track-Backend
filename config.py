@@ -8,7 +8,7 @@ class Config:
     DEBUG = os.getenv("FLASK_DEBUG", "False").lower() == "true"
 
     TESTING = False
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///majitrack.db")
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
