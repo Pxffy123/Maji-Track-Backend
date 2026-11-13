@@ -1,6 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models.submission import Submission
-
+from models import Report
 reports_bp = Blueprint("reports", __name__, url_prefix="/api/reports")
 
 SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
@@ -8,7 +7,7 @@ SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 
 @reports_bp.route("", methods=["GET"])
 def get_reports():
-    query = Submission.query.filter_by(status="approved")
+    query = Report.query.filter_by(status="Approved")
 
     district_id = request.args.get("district_id", type=int)
     if district_id:

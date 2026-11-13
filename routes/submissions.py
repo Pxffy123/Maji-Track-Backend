@@ -1,11 +1,11 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from extensions import db
-from models.submission import Submission, SEVERITY_LEVELS
-from models.district import District
+from models import Report, District
+from schemas import ReportSchema
 
 submissions_bp = Blueprint("submissions", __name__, url_prefix="/api/submissions")
-
+SEVERITY_LEVELS = ["Critical", "High", "Moderate", "Low"]
 
 @submissions_bp.route("", methods=["POST"])
 @jwt_required()
