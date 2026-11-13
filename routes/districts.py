@@ -1,6 +1,6 @@
-from flask import Blueprint, request, jsonify
-from extensions import db
-from models import District
+from flask import Blueprint, jsonify
+
+from models import District, Report
 from schemas import DistrictSchema, ReportSchema
 
 districts_bp = Blueprint("districts", __name__)
@@ -9,10 +9,12 @@ district_schema = DistrictSchema()
 districts_schema = DistrictSchema(many=True)
 reports_schema = ReportSchema(many=True)
 
+
 @districts_bp.route("", methods=["GET"])
 def get_districts():
     districts = District.query.order_by(District.name).all()
     return jsonify(districts_schema.dump(districts)), 200
+
 
 @districts_bp.route("/<int:district_id>", methods=["GET"])
 def get_district(district_id):
@@ -22,6 +24,7 @@ def get_district(district_id):
         return jsonify({"error": "District not found"}), 404
 
     return jsonify(district_schema.dump(district)), 200
+
 
 @districts_bp.route("/<int:district_id>/reports", methods=["GET"])
 def get_district_reports(district_id):
