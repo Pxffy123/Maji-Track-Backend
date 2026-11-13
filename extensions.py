@@ -13,10 +13,6 @@ migrate = Migrate()
 cors = CORS()
 
 def init_extensions(app):
-    """
-    Connect all our extensions to the Flask application.
-    This function is called when the application starts.
-    """
 
     db.init_app(app)
 
