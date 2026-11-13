@@ -3,7 +3,7 @@ from models import Report
 
 reports_bp = Blueprint("reports", __name__, url_prefix="/api/reports")
 
-SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+SEVERITY_ORDER = {"critical": 0, "high": 1, "moderate": 2, "low": 3}
 
 
 def report_to_dict(r):

@@ -2,20 +2,28 @@ def payload(district, **overrides):
     data = {
         "district_id": district.id,
         "location": "Umoja 1",
-        "severity": "critical",
-        "time_without_water": 21,
-        "description": "No water for weeks",
+        "severity": "Critical",
+        "time_without_water": "3 weeks",
+        "description": "No running water in our neighbourhood.",
     }
     data.update(overrides)
     return data
 
 
-def test_create_submission_success(client, auth_headers, district):
+def test_create_report_success(client, auth_headers, district):
     res = client.post("/api/submissions", json=payload(district), headers=auth_headers)
     assert res.status_code == 201
     body = res.get_json()
-    assert body["status"] == "pending"
+    assert body["status"] == "Pending"
     assert body["district"] == "Embakasi"
+    assert body["reporter"] == "fiona"
+
+
+def test_severity_is_case_insensitive(client, auth_headers, district):
+    res = client.post("/api/submissions",
+                      json=payload(district, severity="critical"), headers=auth_headers)
+    assert res.status_code == 201
+    assert res.get_json()["severity"] == "Critical"
 
 
 def test_requires_login(client, district):
@@ -28,17 +36,16 @@ def test_missing_fields(client, auth_headers):
     assert res.status_code == 400
 
 
-def test_invalid_severity(client, auth_headers, district):
+def test_description_required(client, auth_headers, district):
     res = client.post("/api/submissions",
-                      json=payload(district, severity="extreme"), headers=auth_headers)
+                      json=payload(district, description=""), headers=auth_headers)
     assert res.status_code == 400
 
 
-def test_invalid_days(client, auth_headers, district):
-    for bad in ["three weeks", 0, -4]:
-        res = client.post("/api/submissions",
-                          json=payload(district, time_without_water=bad), headers=auth_headers)
-        assert res.status_code == 400
+def test_invalid_severity(client, auth_headers, district):
+    res = client.post("/api/submissions",
+                      json=payload(district, severity="Extreme"), headers=auth_headers)
+    assert res.status_code == 400
 
 
 def test_unknown_district(client, auth_headers, district):

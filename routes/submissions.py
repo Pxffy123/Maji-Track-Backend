@@ -5,7 +5,7 @@ from models import Report, District
 from routes.reports import report_to_dict
 
 submissions_bp = Blueprint("submissions", __name__, url_prefix="/api/submissions")
-SEVERITY_LEVELS = ["low", "medium", "high", "critical"]
+SEVERITY_LEVELS = ["Critical", "High", "Moderate", "Low"]
 
 
 @submissions_bp.route("", methods=["POST"])
@@ -18,8 +18,11 @@ def create_submission():
     if missing:
         return jsonify({"error": f"Missing fields: {', '.join(missing)}"}), 400
 
-    severity = str(data["severity"]).strip().lower()
-    if severity not in SEVERITY_LEVELS:
+    severity = next(
+        (s for s in SEVERITY_LEVELS if s.lower() == str(data["severity"]).strip().lower()),
+        None,
+    )
+    if severity is None:
         return jsonify({"error": f"Severity must be one of {SEVERITY_LEVELS}"}), 400
 
     if not db.session.get(District, data["district_id"]):
