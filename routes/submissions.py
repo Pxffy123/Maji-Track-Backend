@@ -1,10 +1,15 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from extensions import db
-from models.submission import Submission, SEVERITY_LEVELS
-from models.district import District
 
-submissions_bp = Blueprint("submissions", __name__, url_prefix="/api/submissions")
+from extensions import db
+from models import Report, District
+from schemas import ReportSchema
+
+submissions_bp = Blueprint("submissions", __name__)
+
+report_schema = ReportSchema()
+
+SEVERITY_LEVELS = ["Critical", "High", "Moderate", "Low"]
 
 
 @submissions_bp.route("", methods=["POST"])
@@ -12,33 +17,48 @@ submissions_bp = Blueprint("submissions", __name__, url_prefix="/api/submissions
 def create_submission():
     data = request.get_json() or {}
 
-    required = ["district_id", "location", "severity", "time_without_water"]
-    missing = [f for f in required if data.get(f) in (None, "")]
+    required = [
+        "district_id",
+        "location",
+        "severity",
+        "time_without_water",
+        "description"
+    ]
+
+    missing = [field for field in required if data.get(field) in (None, "")]
     if missing:
-        return jsonify({"error": f"Missing fields: {', '.join(missing)}"}), 400
+        return jsonify({
+            "error": f"Missing fields: {', '.join(missing)}"
+        }), 400
 
     if data["severity"] not in SEVERITY_LEVELS:
-        return jsonify({"error": f"Severity must be one of {SEVERITY_LEVELS}"}), 400
+        return jsonify({
+            "error": f"Severity must be one of {SEVERITY_LEVELS}"
+        }), 400
 
     try:
-        days = int(data["time_without_water"])
+        district_id = int(data["district_id"])
+        user_id = int(get_jwt_identity())
     except (TypeError, ValueError):
-        return jsonify({"error": "time_without_water must be a number of days"}), 400
-    if days <= 0:
-        return jsonify({"error": "time_without_water must be greater than 0"}), 400
+        return jsonify({"error": "Invalid district or user ID"}), 400
 
-    if not db.session.get(District, data["district_id"]):
+    district = db.session.get(District, district_id)
+    if not district:
         return jsonify({"error": "District not found"}), 404
 
-    submission = Submission(
-        user_id=int(get_jwt_identity()),
-        district_id=data["district_id"],
+    report = Report(
+        user_id=user_id,
+        district_id=district_id,
         location=data["location"].strip(),
         severity=data["severity"],
-        time_without_water=days,
-        description=data.get("description"),
+        time_without_water=str(data["time_without_water"]).strip(),
+        description=data["description"].strip()
     )
-    db.session.add(submission)
+
+    db.session.add(report)
     db.session.commit()
 
-    return jsonify(submission.to_dict()), 201
+    return jsonify({
+        "message": "Report submitted successfully",
+        "report": report_schema.dump(report)
+    }), 201

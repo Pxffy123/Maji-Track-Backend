@@ -1,21 +1,36 @@
 from flask import Blueprint, request, jsonify
-from models.submission import Submission
 
-reports_bp = Blueprint("reports", __name__, url_prefix="/api/reports")
+from models import Report
+from schemas import ReportSchema
 
-SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+reports_bp = Blueprint("reports", __name__)
+
+reports_schema = ReportSchema(many=True)
+
+SEVERITY_ORDER = {
+    "Critical": 0,
+    "High": 1,
+    "Moderate": 2,
+    "Low": 3
+}
 
 
 @reports_bp.route("", methods=["GET"])
 def get_reports():
-    query = Submission.query.filter_by(status="approved")
+    query = Report.query.filter_by(status="Approved")
 
     district_id = request.args.get("district_id", type=int)
-    if district_id:
+
+    if district_id is not None:
         query = query.filter_by(district_id=district_id)
 
-    reports = sorted(
-        query.all(),
-        key=lambda s: (SEVERITY_ORDER[s.severity], -s.time_without_water),
+    reports = query.all()
+
+    reports.sort(
+        key=lambda report: (
+            SEVERITY_ORDER.get(report.severity, 4),
+            -report.created_at.timestamp()
+        )
     )
-    return jsonify([r.to_dict() for r in reports]), 200
+
+    return jsonify(reports_schema.dump(reports)), 200
