@@ -10,6 +10,7 @@ from flask_jwt_extended import (
 
 from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
+from models import User
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
