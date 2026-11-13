@@ -4,10 +4,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 class Config:
-    """
-    Main configuration class for the Maji-Track application.
-    Stores application, database, security and email settings.
-    """
     SECRET_KEY = os.getenv("SECRET_KEY")
     DEBUG = os.getenv("FLASK_DEBUG", "False").lower() == "true"
 
