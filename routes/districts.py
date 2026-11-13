@@ -1,12 +1,11 @@
 from flask import Blueprint, jsonify
-
 from models import District, Report
 from schemas import DistrictSchema, ReportSchema
 
 districts_bp = Blueprint("districts", __name__)
 
-district_schema = DistrictSchema()
 districts_schema = DistrictSchema(many=True)
+district_schema = DistrictSchema()
 reports_schema = ReportSchema(many=True)
 
 
@@ -33,11 +32,9 @@ def get_district_reports(district_id):
     if not district:
         return jsonify({"error": "District not found"}), 404
 
-    reports = (
-        Report.query
-        .filter_by(district_id=district_id, status="Approved")
-        .order_by(Report.created_at.desc())
-        .all()
-    )
+    reports = Report.query.filter_by(
+        district_id=district_id,
+        status="Approved"
+    ).order_by(Report.created_at.desc()).all()
 
     return jsonify(reports_schema.dump(reports)), 200
