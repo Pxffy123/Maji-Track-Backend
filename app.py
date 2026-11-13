@@ -2,7 +2,7 @@
 from flask import Flask
 
 from config import Config
-from extensions import db, jwt, bcrypt
+from extensions import init_extensions
 
 # Import route blueprints
 from routes.auth import auth_bp
@@ -20,9 +20,7 @@ def create_app():
     app.config.from_object(Config)
 
     # Initialize extensions
-    db.init_app(app)
-    jwt.init_app(app)
-    bcrypt.init_app(app)
+    init_extensions(app)
 
     # Register route blueprints
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
