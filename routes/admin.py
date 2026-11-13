@@ -1,7 +1,8 @@
 
 from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, User, Report
+from extensions import db
+from models import User, Report
 from schemas import ReportSchema
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
