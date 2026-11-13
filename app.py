@@ -31,8 +31,13 @@ def create_app():
     app.register_blueprint(districts_bp, url_prefix="/api/districts")
     app.register_blueprint(dashboard_bp, url_prefix="/api/dashboard")
 
-    return app
+    
+    
+    @app.route("/")
+    def home():
+        return {"message": "Maji-Track Backend is running"}
 
+    return app
 
 app = create_app()
 
