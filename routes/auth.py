@@ -159,6 +159,53 @@ def verify_email():
     }), 200
 
 
+@auth_bp.route("/resend-verification", methods=["POST"])
+def resend_verification():
+    data = request.get_json(silent=True) or {}
+
+    email = data.get("email", "").strip().lower()
+
+    if not email:
+        return jsonify({
+            "error": "Email is required."
+        }), 400
+
+    user = User.query.filter_by(email=email).first()
+
+    if not user:
+        return jsonify({
+            "error": "User not found."
+        }), 404
+
+    if user.is_verified:
+        return jsonify({
+            "message": "Email is already verified."
+        }), 200
+
+    code = f"{secrets.randbelow(1000000):06d}"
+
+    user.verification_code_hash = generate_password_hash(code)
+    user.verification_expires_at = (
+        datetime.now(timezone.utc) + timedelta(minutes=10)
+    )
+
+    try:
+        db.session.commit()
+        send_verification_email(email, code)
+
+        return jsonify({
+            "message": "A new verification code has been sent to your email."
+        }), 200
+
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Resending verification code failed")
+
+        return jsonify({
+            "error": "Could not send verification code. Please try again."
+        }), 500
+
+
 @auth_bp.route("/login", methods=["POST"])
 def login():
 
