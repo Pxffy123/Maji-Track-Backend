@@ -14,9 +14,10 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), default="resident", nullable=False)
 
+    # Email verification fields
+
     is_verified = db.Column(db.Boolean, default=False, nullable=False)
-    verification_code_hash = db.Column(db.String(255), nullable=True)
-    verification_expires_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    verification_code_hash = db.Column(db.String(255), nullable=True)    verification_expires_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
     # Reports submitted by this user
     reports = db.relationship(
