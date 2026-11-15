@@ -13,7 +13,7 @@ def app():
     app.config.update(
         TESTING=True,
         SQLALCHEMY_DATABASE_URI="sqlite:///:memory:",
-        JWT_SECRET_KEY="test-secret",
+        JWT_SECRET_KEY="test-secret-key-for-maji-track-tests-0123456789",
     )
     init_extensions(app)
     app.register_blueprint(submissions_bp)
@@ -70,3 +70,22 @@ def make_report(user, district):
         db.session.commit()
         return r
     return _make
+
+@pytest.fixture
+def other_headers(app):
+    u = User(username="other", email="other@example.com",
+             password_hash="x", role="resident")
+    db.session.add(u)
+    db.session.commit()
+    token = create_access_token(identity=str(u.id))
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def admin_headers(app):
+    u = User(username="admin", email="admin@example.com",
+             password_hash="x", role="admin")
+    db.session.add(u)
+    db.session.commit()
+    token = create_access_token(identity=str(u.id))
+    return {"Authorization": f"Bearer {token}"}
