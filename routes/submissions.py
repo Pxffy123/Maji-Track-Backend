@@ -5,6 +5,7 @@ from models import Report, District
 from routes.reports import report_to_dict
 
 submissions_bp = Blueprint("submissions", __name__, url_prefix="/api/submissions")
+
 SEVERITY_LEVELS = ["Critical", "High", "Moderate", "Low"]
 
 
