@@ -1,3 +1,15 @@
+<<<<<<< HEAD
+.venv/
+venv/
+__pycache__/
+*.pyc
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+.env
+=======
 __pycache__/
 *.py[cod]
 venv/venv/
@@ -7,6 +19,7 @@ __pycache__/
 *.py[cod]
 .env
 .venv/
+>>>>>>> 9e7c5a4c55d8c42d5a729d4be6cab71a9590065c
 
 venv/
 .venv/
