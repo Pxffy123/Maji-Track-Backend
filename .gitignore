@@ -20,3 +20,8 @@ __pycache__/
 .env
 .venv/
 >>>>>>> 9e7c5a4c55d8c42d5a729d4be6cab71a9590065c
+
+venv/
+.venv/
+__pycache__/
+.pytest_cache/
