@@ -3,7 +3,8 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from extensions import db
 from models import Report, District, User
 from routes.reports import report_to_dict
-
+import cloudinary.uploader
+from werkzeug.utils import secure_filename
 submissions_bp = Blueprint("submissions", __name__, url_prefix="/api/submissions")
 
 SEVERITY_LEVELS = ["Critical", "High", "Moderate", "Low"]
@@ -12,10 +13,19 @@ SEVERITY_LEVELS = ["Critical", "High", "Moderate", "Low"]
 @submissions_bp.route("", methods=["POST"])
 @jwt_required()
 def create_submission():
-    data = request.get_json() or {}
+    # Accept both normal JSON and multipart form data
+    data = request.form if request.form else (request.get_json(silent=True) or {})
 
-    required = ["district_id", "location", "severity", "time_without_water", "description"]
+    required = [
+        "district_id",
+        "location",
+        "severity",
+        "time_without_water",
+        "description"
+    ]
+
     missing = [f for f in required if data.get(f) in (None, "")]
+
     if missing:
         return jsonify({"error": f"Missing fields: {', '.join(missing)}"}), 400
 
@@ -23,20 +33,59 @@ def create_submission():
         (s for s in SEVERITY_LEVELS if s.lower() == str(data["severity"]).strip().lower()),
         None,
     )
+
     if severity is None:
         return jsonify({"error": f"Severity must be one of {SEVERITY_LEVELS}"}), 400
 
-    if not db.session.get(District, data["district_id"]):
+    try:
+        district_id = int(data["district_id"])
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid district_id"}), 400
+
+    if not db.session.get(District, district_id):
         return jsonify({"error": "District not found"}), 404
+
+    # Upload image if the resident attached one
+    image_url = None
+    uploaded_image = request.files.get("image")
+
+    if uploaded_image and uploaded_image.filename:
+        filename = secure_filename(uploaded_image.filename)
+        allowed_extensions = {"png", "jpg", "jpeg", "webp"}
+
+        if "." not in filename or filename.rsplit(".", 1)[1].lower() not in allowed_extensions:
+            return jsonify({"error": "Only PNG, JPG, JPEG and WEBP images are allowed"}), 400
+
+        try:
+            from PIL import Image
+
+            # Check that the uploaded file is a valid image
+            img = Image.open(uploaded_image.stream)
+            img.verify()
+            uploaded_image.stream.seek(0)
+
+            # Upload to Cloudinary
+            result = cloudinary.uploader.upload(
+                uploaded_image,
+                folder="maji_track/reports",
+                resource_type="image"
+            )
+
+            image_url = result["secure_url"]
+
+        except Exception:
+            return jsonify({"error": "Image upload failed. Please try another image."}), 400
 
     report = Report(
         user_id=int(get_jwt_identity()),
-        district_id=data["district_id"],
+        district_id=district_id,
         location=str(data["location"]).strip(),
         severity=severity,
         time_without_water=str(data["time_without_water"]).strip(),
         description=str(data["description"]).strip(),
+        image_url=image_url
     )
+
     db.session.add(report)
     db.session.commit()
 

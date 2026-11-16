@@ -47,6 +47,7 @@ class Report(db.Model):
     __tablename__ = "reports"
 
     id = db.Column(db.Integer, primary_key=True)
+    image_url = db.Column(db.String(500), nullable=True)
 
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     district_id = db.Column(db.Integer, db.ForeignKey("districts.id"), nullable=False)

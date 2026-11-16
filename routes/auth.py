@@ -11,28 +11,33 @@ from flask_jwt_extended import (
 from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
 from models import User
-
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 def send_verification_email(email, code):
-    from sendgrid import SendGridAPIClient
-    from sendgrid.helpers.mail import Mail
+    api_key = current_app.config.get("SENDGRID_API_KEY")
+    sender = current_app.config.get("MAIL_FROM_EMAIL")
+
+    if not api_key or not sender:
+        raise ValueError("SendGrid API key or sender email is missing.")
 
     message = Mail(
-        from_email=current_app.config["MAIL_FROM_EMAIL"],
+        from_email=sender,
         to_emails=email,
         subject="Maji-Track Email Verification",
         plain_text_content=(
-            f"Your Maji-Track verification code is {code}. "
-            "It expires in 10 minutes."
-        ),
+            f"Welcome to Maji-Track!\n\n"
+            f"Your verification code is: {code}\n\n"
+            f"This code expires in 10 minutes."
+        )
     )
 
-    client = SendGridAPIClient(
-        current_app.config["SENDGRID_API_KEY"]
-    )
+    client = SendGridAPIClient(api_key)
+    response = client.send(message)
 
-    client.send(message)
+    if response.status_code not in (200, 201, 202):
+        raise Exception(f"SendGrid failed with status {response.status_code}")
 
 @auth_bp.route("/register", methods=["POST"])
 def register():
@@ -43,7 +48,7 @@ def register():
     email = data.get("email", "").strip().lower()
     password = data.get("password", "")
 
-   
+
     if not username or not email or not password:
         return jsonify({
             "error": "Username, email and password are required."
@@ -69,7 +74,7 @@ def register():
         username=username,
         email=email,
 
-       
+
         password_hash=generate_password_hash(password),
 
         role="community_member",
@@ -83,7 +88,7 @@ def register():
     )
 
     try:
-        
+
         db.session.add(user)
         db.session.commit()
         send_verification_email(email, code)
@@ -113,7 +118,7 @@ def verify_email():
         return jsonify({
             "error": "Email and verification code are required."
         }), 400
-    
+
     user = User.query.filter_by(email=email).first()
 
     if not user:
@@ -131,7 +136,7 @@ def verify_email():
             "error": "No active verification code. Please register again or request a new code."
         }), 400
 
-   
+
     if not check_password_hash(user.verification_code_hash, code):
         return jsonify({
             "error": "Invalid verification code."
@@ -281,7 +286,7 @@ def get_current_user():
         return jsonify({
             "error": "User not found."
         }), 404
-    
+
     return jsonify({
         "id": user.id,
         "username": user.username,

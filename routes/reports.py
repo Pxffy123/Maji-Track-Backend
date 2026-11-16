@@ -17,6 +17,7 @@ def report_to_dict(r):
         "severity": r.severity,
         "time_without_water": r.time_without_water,
         "description": r.description,
+        "image_url": r.image_url,
         "status": r.status,
         "reporter": r.resident.username,
         "created_at": r.created_at.isoformat(),
