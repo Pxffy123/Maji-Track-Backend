@@ -35,3 +35,4 @@ urllib3==2.8.0
 Werkzeug==3.1.9
 marshmallow
 gunicorn
+psycopg[binary]
