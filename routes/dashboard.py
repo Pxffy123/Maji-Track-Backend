@@ -43,8 +43,8 @@ def get_dashboard_summary():
         data = {
             "total_reports": Report.query.count(),
             "pending_reports": get_status_count("pending"),
-            "verified_reports": get_status_count("verified"),
-            "resolved_reports": get_status_count("resolved"),
+            "approved_reports": get_status_count("approved"),
+           "resolved_reports": get_status_count("resolved"),
             "affected_districts": (
                 District.query
                 .join(Report, Report.district_id == District.id)

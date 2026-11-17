@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from extensions import db
 
 
+
 class User(db.Model):
     __tablename__ = "users"
 
@@ -14,6 +15,7 @@ class User(db.Model):
     role = db.Column(db.String(20), default="resident", nullable=False)
 
     # Email verification fields
+
     is_verified = db.Column(db.Boolean, default=False, nullable=False)
     verification_code_hash = db.Column(db.String(255), nullable=True)
     verification_expires_at = db.Column(db.DateTime(timezone=True), nullable=True)
@@ -32,7 +34,6 @@ class User(db.Model):
         back_populates="reviewer"
     )
 
-
 class District(db.Model):
     __tablename__ = "districts"
 
@@ -46,6 +47,7 @@ class Report(db.Model):
     __tablename__ = "reports"
 
     id = db.Column(db.Integer, primary_key=True)
+    image_url = db.Column(db.String(500), nullable=True)
 
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     district_id = db.Column(db.Integer, db.ForeignKey("districts.id"), nullable=False)
