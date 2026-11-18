@@ -1,7 +1,7 @@
 
 
-from flask import Flask
-
+from flask import Flask, send_from_directory
+from flask_swagger_ui import get_swaggerui_blueprint
 from config import Config
 from extensions import init_extensions
 
@@ -19,7 +19,21 @@ def create_app():
 
     # Load application configuration
     app.config.from_object(Config)
+    
+    @app.route("/openapi.yaml")
+    def openapi():
+        return send_from_directory(app.root_path, "openapi.yaml")
 
+    SWAGGER_URL = "/docs"
+    API_URL = "/openapi.yaml"
+
+    swaggerui_blueprint = get_swaggerui_blueprint(
+        SWAGGER_URL,
+        API_URL,
+        config={"app_name": "Maji-Track API"}
+    )
+
+    app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
     # Initialize extensions
     init_extensions(app)
 
