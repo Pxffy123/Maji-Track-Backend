@@ -11,8 +11,12 @@ info:
   version: 1.0.0
 
 servers:
+  servers:
   - url: http://localhost:5555
     description: Local development server
+
+  - url: https://YOUR-RAILWAY-DOMAIN.up.railway.app
+    description: Production server (Railway)
 
 tags:
   - name: Authentication
