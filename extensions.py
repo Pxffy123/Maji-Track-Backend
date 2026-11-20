@@ -23,13 +23,13 @@ def init_extensions(app):
     migrate.init_app(app, db)
 
     cors.init_app(
-        app,
-        resources={
-            r"/*": {
-                "origins": ["http://localhost:5173"]
-            }
+    app,
+    resources={
+        r"/*": {
+            "origins": app.config["CORS_ORIGINS"]
         }
-    )
+    }
+)
     cloudinary.config(
         cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
         api_key=os.getenv("CLOUDINARY_API_KEY"),
