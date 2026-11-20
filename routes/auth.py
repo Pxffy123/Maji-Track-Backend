@@ -1,5 +1,8 @@
+
 from datetime import datetime, timedelta, timezone
 import secrets
+import requests
+
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import (
     create_access_token,
@@ -11,36 +14,46 @@ from flask_jwt_extended import (
 from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
 from models import User
-import smtplib
-from email.message import EmailMessage
+
+
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 
 def send_verification_email(email, code):
-    smtp_server = current_app.config.get("BREVO_SMTP_SERVER")
-    smtp_port = current_app.config.get("BREVO_SMTP_PORT")
-    smtp_login = current_app.config.get("BREVO_SMTP_LOGIN")
-    smtp_key = current_app.config.get("BREVO_SMTP_KEY")
+    api_key = current_app.config.get("BREVO_API_KEY")
     sender = current_app.config.get("MAIL_FROM_EMAIL")
 
-    if not all([smtp_server, smtp_port, smtp_login, smtp_key, sender]):
-        raise ValueError("Brevo SMTP settings are missing.")
+    if not api_key or not sender:
+        raise ValueError("Brevo API key or sender email is missing.")
 
-    message = EmailMessage()
-    message["Subject"] = "Maji-Track Email Verification"
-    message["From"] = sender
-    message["To"] = email
-
-    message.set_content(
-        f"Welcome to Maji-Track!\n\n"
-        f"Your verification code is: {code}\n\n"
-        f"This code expires in 10 minutes."
+    response = requests.post(
+        "https://api.brevo.com/v3/smtp/email",
+        headers={
+            "accept": "application/json",
+            "api-key": api_key,
+            "content-type": "application/json"
+        },
+        json={
+            "sender": {"email": sender},
+            "to": [{"email": email}],
+            "subject": "Maji-Track Email Verification",
+            "textContent": (
+                f"Welcome to Maji-Track!\n\n"
+                f"Your verification code is: {code}\n\n"
+                f"This code expires in 10 minutes."
+            )
+        },
+        timeout=15
     )
 
-    with smtplib.SMTP(smtp_server, smtp_port) as server:
-        server.starttls()
-        server.login(smtp_login, smtp_key)
-        server.send_message(message)
+    if not response.ok:
+        current_app.logger.error(
+            "Brevo API error %s: %s",
+            response.status_code,
+            response.text
+        )
+        response.raise_for_status()
+
 
 @auth_bp.route("/register", methods=["POST"])
 def register():
@@ -50,7 +63,6 @@ def register():
     username = data.get("username", "").strip()
     email = data.get("email", "").strip().lower()
     password = data.get("password", "")
-
 
     if not username or not email or not password:
         return jsonify({
@@ -76,24 +88,18 @@ def register():
     user = User(
         username=username,
         email=email,
-
-
         password_hash=generate_password_hash(password),
-
         role="community_member",
-
         is_verified=False,
-
         verification_code_hash=generate_password_hash(code),
-
         verification_expires_at=datetime.now(timezone.utc)
         + timedelta(minutes=10),
     )
 
     try:
-
         db.session.add(user)
         db.session.commit()
+
         send_verification_email(email, code)
 
         return jsonify({
@@ -108,6 +114,7 @@ def register():
         return jsonify({
             "error": "Could not complete registration. Please try again."
         }), 500
+
 
 @auth_bp.route("/verify-email", methods=["POST"])
 def verify_email():
@@ -139,7 +146,6 @@ def verify_email():
             "error": "No active verification code. Please register again or request a new code."
         }), 400
 
-
     if not check_password_hash(user.verification_code_hash, code):
         return jsonify({
             "error": "Invalid verification code."
@@ -169,6 +175,7 @@ def verify_email():
 
 @auth_bp.route("/resend-verification", methods=["POST"])
 def resend_verification():
+
     data = request.get_json(silent=True) or {}
 
     email = data.get("email", "").strip().lower()
@@ -199,6 +206,7 @@ def resend_verification():
 
     try:
         db.session.commit()
+
         send_verification_email(email, code)
 
         return jsonify({
@@ -207,6 +215,7 @@ def resend_verification():
 
     except Exception:
         db.session.rollback()
+
         current_app.logger.exception("Resending verification code failed")
 
         return jsonify({
@@ -277,6 +286,7 @@ def refresh():
         "access_token": new_access_token
     }), 200
 
+
 @auth_bp.route("/me", methods=["GET"])
 @jwt_required()
 def get_current_user():
@@ -296,4 +306,3 @@ def get_current_user():
         "email": user.email,
         "role": user.role
     }), 200
-
