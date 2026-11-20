@@ -26,15 +26,10 @@ def init_extensions(app):
     app,
     resources={
         r"/*": {
-            "origins": [
-                "http://localhost:5173",
-                "https://maji-track.netlify.app"
-            ]
+            "origins": app.config["CORS_ORIGINS"]
         }
-    },
-    allow_headers=["Content-Type", "Authorization"],
-    methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
-    )
+    }
+)
     cloudinary.config(
         cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
         api_key=os.getenv("CLOUDINARY_API_KEY"),
