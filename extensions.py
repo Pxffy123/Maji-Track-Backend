@@ -23,12 +23,17 @@ def init_extensions(app):
     migrate.init_app(app, db)
 
     cors.init_app(
-        app,
-        resources={
-            r"/*": {
-                "origins": ["http://localhost:5173"]
-            }
+    app,
+    resources={
+        r"/*": {
+            "origins": [
+                "http://localhost:5173",
+                "https://maji-track.netlify.app"
+            ]
         }
+    },
+    allow_headers=["Content-Type", "Authorization"],
+    methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
     )
     cloudinary.config(
         cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
