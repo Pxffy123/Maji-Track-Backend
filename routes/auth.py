@@ -1,7 +1,9 @@
 
 from datetime import datetime, timedelta, timezone
 import secrets
-import requests
+import json
+import urllib.request
+import urllib.error
 
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import (
@@ -19,6 +21,7 @@ from models import User
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 
+
 def send_verification_email(email, code):
     api_key = current_app.config.get("BREVO_API_KEY")
     sender = current_app.config.get("MAIL_FROM_EMAIL")
@@ -26,33 +29,43 @@ def send_verification_email(email, code):
     if not api_key or not sender:
         raise ValueError("Brevo API key or sender email is missing.")
 
-    response = requests.post(
+    payload = {
+        "sender": {"email": sender},
+        "to": [{"email": email}],
+        "subject": "Maji-Track Email Verification",
+        "textContent": (
+            f"Welcome to Maji-Track!\n\n"
+            f"Your verification code is: {code}\n\n"
+            "This code expires in 10 minutes."
+        )
+    }
+
+    req = urllib.request.Request(
         "https://api.brevo.com/v3/smtp/email",
+        data=json.dumps(payload).encode("utf-8"),
         headers={
             "accept": "application/json",
             "api-key": api_key,
             "content-type": "application/json"
         },
-        json={
-            "sender": {"email": sender},
-            "to": [{"email": email}],
-            "subject": "Maji-Track Email Verification",
-            "textContent": (
-                f"Welcome to Maji-Track!\n\n"
-                f"Your verification code is: {code}\n\n"
-                f"This code expires in 10 minutes."
-            )
-        },
-        timeout=15
+        method="POST"
     )
 
-    if not response.ok:
+    try:
+        with urllib.request.urlopen(req, timeout=15) as response:
+            current_app.logger.info(
+                "Brevo email accepted: HTTP %s",
+                response.status
+            )
+
+    except urllib.error.HTTPError as error:
+        error_body = error.read().decode("utf-8", errors="replace")
         current_app.logger.error(
             "Brevo API error %s: %s",
-            response.status_code,
-            response.text
+            error.code,
+            error_body
         )
-        response.raise_for_status()
+        raise
 
 
 @auth_bp.route("/register", methods=["POST"])
