@@ -11,33 +11,36 @@ from flask_jwt_extended import (
 from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
 from models import User
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
+import smtplib
+from email.message import EmailMessage
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
+
 def send_verification_email(email, code):
-    api_key = current_app.config.get("SENDGRID_API_KEY")
+    smtp_server = current_app.config.get("BREVO_SMTP_SERVER")
+    smtp_port = current_app.config.get("BREVO_SMTP_PORT")
+    smtp_login = current_app.config.get("BREVO_SMTP_LOGIN")
+    smtp_key = current_app.config.get("BREVO_SMTP_KEY")
     sender = current_app.config.get("MAIL_FROM_EMAIL")
 
-    if not api_key or not sender:
-        raise ValueError("SendGrid API key or sender email is missing.")
+    if not all([smtp_server, smtp_port, smtp_login, smtp_key, sender]):
+        raise ValueError("Brevo SMTP settings are missing.")
 
-    message = Mail(
-        from_email=sender,
-        to_emails=email,
-        subject="Maji-Track Email Verification",
-        plain_text_content=(
-            f"Welcome to Maji-Track!\n\n"
-            f"Your verification code is: {code}\n\n"
-            f"This code expires in 10 minutes."
-        )
+    message = EmailMessage()
+    message["Subject"] = "Maji-Track Email Verification"
+    message["From"] = sender
+    message["To"] = email
+
+    message.set_content(
+        f"Welcome to Maji-Track!\n\n"
+        f"Your verification code is: {code}\n\n"
+        f"This code expires in 10 minutes."
     )
 
-    client = SendGridAPIClient(api_key)
-    response = client.send(message)
-
-    if response.status_code not in (200, 201, 202):
-        raise Exception(f"SendGrid failed with status {response.status_code}")
+    with smtplib.SMTP(smtp_server, smtp_port) as server:
+        server.starttls()
+        server.login(smtp_login, smtp_key)
+        server.send_message(message)
 
 @auth_bp.route("/register", methods=["POST"])
 def register():

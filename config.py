@@ -36,8 +36,10 @@ class Config:
     SESSION_COOKIE_SECURE = os.getenv(
         "SESSION_COOKIE_SECURE", "False"
     ).lower() == "true"
-    SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
-
+    BREVO_SMTP_SERVER = os.getenv("BREVO_SMTP_SERVER", "smtp-relay.brevo.com")
+    BREVO_SMTP_PORT = int(os.getenv("BREVO_SMTP_PORT", "587"))
+    BREVO_SMTP_LOGIN = os.getenv("BREVO_SMTP_LOGIN")
+    BREVO_SMTP_KEY = os.getenv("BREVO_SMTP_KEY")
     MAIL_FROM_EMAIL = os.getenv("MAIL_FROM_EMAIL")
 
     VERIFICATION_CODE_LENGTH = 6
