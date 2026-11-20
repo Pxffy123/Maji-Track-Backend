@@ -33,3 +33,8 @@ SQLAlchemy==2.1.8
 typing_extensions==4.16.0
 urllib3==2.8.0
 Werkzeug==3.1.9
+marshmallow
+gunicorn
+psycopg[binary]
+
+flask-swagger-ui==5.35.0
