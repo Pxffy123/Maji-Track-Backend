@@ -14,6 +14,7 @@ def report_to_dict(r):
         "id": r.id,
         "location": r.location,
         "district": r.district.name,
+        "district_id": r.district_id,
         "severity": r.severity,
         "time_without_water": r.time_without_water,
         "description": r.description,
