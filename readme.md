@@ -197,10 +197,13 @@ The Flask backend exposes the following API route groups:
 
 ### Administrative Endpoints
 
-- `GET /api/admin/pending`
-- `GET /api/admin/approved`
-- `POST /api/admin/approve`
-- `POST /api/admin/reject`
+- `GET /api/admin/reports/pending`
+- `GET /api/admin/reports/approved`
+- `PATCH /api/admin/reports/<id>/approve`
+- `PATCH /api/admin/reports/<id>/reject`
+
+Admins are created by registering normally, then running
+`flask --app app make-admin you@example.com` against the production database.
 
 ### Submission Endpoints
 

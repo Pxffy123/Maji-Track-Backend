@@ -2,49 +2,54 @@
 from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, User, Report
-from schemas import ReportSchema
+from routes.reports import report_to_dict
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
-
-report_schema = ReportSchema()
-reports_schema = ReportSchema(many=True)
 
 
 # Get all pending reports
 @admin_bp.route("/reports/pending", methods=["GET"])
 @jwt_required()
 def get_pending_reports():
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     user = db.session.get(User, current_user_id)
 
     if not user or user.role != "admin":
         return jsonify({"error": "Admin access required"}), 403
 
-    reports = Report.query.filter_by(status="Pending").all()
+    reports = (
+        Report.query.filter_by(status="Pending")
+        .order_by(Report.created_at.asc())
+        .all()
+    )
 
-    return jsonify(reports_schema.dump(reports)), 200
+    return jsonify([report_to_dict(r) for r in reports]), 200
 
 
 # Get all approved reports
 @admin_bp.route("/reports/approved", methods=["GET"])
 @jwt_required()
 def get_approved_reports():
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     user = db.session.get(User, current_user_id)
 
     if not user or user.role != "admin":
         return jsonify({"error": "Admin access required"}), 403
 
-    reports = Report.query.filter_by(status="Approved").all()
+    reports = (
+        Report.query.filter_by(status="Approved")
+        .order_by(Report.created_at.desc())
+        .all()
+    )
 
-    return jsonify(reports_schema.dump(reports)), 200
+    return jsonify([report_to_dict(r) for r in reports]), 200
 
 
 # Approve a report
 @admin_bp.route("/reports/<int:report_id>/approve", methods=["PATCH"])
 @jwt_required()
 def approve_report(report_id):
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     user = db.session.get(User, current_user_id)
 
     if not user or user.role != "admin":
@@ -65,7 +70,7 @@ def approve_report(report_id):
 
     return jsonify({
         "message": "Report approved successfully",
-        "report": report_schema.dump(report)
+        "report": report_to_dict(report)
     }), 200
 
 
@@ -73,7 +78,7 @@ def approve_report(report_id):
 @admin_bp.route("/reports/<int:report_id>/reject", methods=["PATCH"])
 @jwt_required()
 def reject_report(report_id):
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     user = db.session.get(User, current_user_id)
 
     if not user or user.role != "admin":
@@ -94,5 +99,5 @@ def reject_report(report_id):
 
     return jsonify({
         "message": "Report rejected successfully",
-        "report": report_schema.dump(report)
+        "report": report_to_dict(report)
     }), 200
