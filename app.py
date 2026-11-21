@@ -67,26 +67,6 @@ def create_app():
         db.session.commit()
         click.echo(f"{user.email} is now an admin.")
 
-        # Usage: flask --app app seed-districts
-    @app.cli.command("seed-districts")
-    def seed_districts():
-        """Add Nairobi's 17 sub-counties (safe to run more than once)."""
-        from extensions import db
-        from models import District
-
-        names = [
-            "Dagoretti North", "Dagoretti South", "Embakasi Central",
-            "Embakasi East", "Embakasi North", "Embakasi South",
-            "Embakasi West", "Kamukunji", "Kasarani", "Kibra", "Langata",
-            "Makadara", "Mathare", "Roysambu", "Ruaraka", "Starehe",
-            "Westlands",
-        ]
-        existing = {d.name for d in District.query.all()}
-        new = [n for n in names if n not in existing]
-        db.session.add_all(District(name=n) for n in new)
-        db.session.commit()
-        click.echo(f"Added {len(new)} districts ({len(existing)} already existed).")
-        
     return app
 
 app = create_app()

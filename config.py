@@ -46,10 +46,12 @@ class Config:
     VERIFICATION_CODE_LENGTH = 6
     VERIFICATION_CODE_EXPIRY = 10
 
-    CORS_ORIGINS = os.getenv(
-        "CORS_ORIGINS",
-        "http://localhost:5173"
-    ).split(",")
+    # Comma-separated list, e.g. "https://your-site.netlify.app,http://localhost:5173"
+    CORS_ORIGINS = [
+        origin.strip().rstrip("/")
+        for origin in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")
+        if origin.strip()
+    ]
 
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024
 
