@@ -1,5 +1,6 @@
 
 
+import click
 from flask import Flask, send_from_directory
 from flask_swagger_ui import get_swaggerui_blueprint
 from config import Config
@@ -51,6 +52,41 @@ def create_app():
     def home():
         return {"message": "Maji-Track Backend is running"}
 
+    # Usage: flask --app app make-admin someone@example.com
+    @app.cli.command("make-admin")
+    @click.argument("email")
+    def make_admin(email):
+        """Give an existing, registered user the admin role."""
+        from extensions import db
+        from models import User
+
+        user = User.query.filter_by(email=email.strip().lower()).first()
+        if not user:
+            raise click.ClickException(f"No user found with email {email}")
+        user.role = "admin"
+        db.session.commit()
+        click.echo(f"{user.email} is now an admin.")
+
+        # Usage: flask --app app seed-districts
+    @app.cli.command("seed-districts")
+    def seed_districts():
+        """Add Nairobi's 17 sub-counties (safe to run more than once)."""
+        from extensions import db
+        from models import District
+
+        names = [
+            "Dagoretti North", "Dagoretti South", "Embakasi Central",
+            "Embakasi East", "Embakasi North", "Embakasi South",
+            "Embakasi West", "Kamukunji", "Kasarani", "Kibra", "Langata",
+            "Makadara", "Mathare", "Roysambu", "Ruaraka", "Starehe",
+            "Westlands",
+        ]
+        existing = {d.name for d in District.query.all()}
+        new = [n for n in names if n not in existing]
+        db.session.add_all(District(name=n) for n in new)
+        db.session.commit()
+        click.echo(f"Added {len(new)} districts ({len(existing)} already existed).")
+        
     return app
 
 app = create_app()
